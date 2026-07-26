@@ -18,5 +18,6 @@ typedef enum{
 } comms_state_t;
 
 comms_state_t comms_init(const comms_system_type_t system_type);
+comms_state_t comms_check(void);
 
 #endif

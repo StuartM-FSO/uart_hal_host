@@ -3,9 +3,15 @@
 
 constexpr uint32_t LOOP_SPEED_MS = 1000U;
 
+typedef enum{
+  FSM_UNITIALISED = 0,
+  FSM_WAITING
+} fsm_state_t;
+
 typedef struct{
   uint32_t loop_timer;
   bool led_on;
+  fsm_state_t current_state;
 } loop_state_t;
 
 loop_state_t state = {};
@@ -21,6 +27,7 @@ void setup() {
   comms_init(COM_TYPE_HOST);
   state.loop_timer = millis();
   state.led_on = false;
+  state.current_state = FSM_WAITING;
   Serial.println("comms init as host");
 }
 
@@ -28,11 +35,26 @@ void loop() {
   uint32_t now = millis();
   uint32_t loop_timer = state.loop_timer;
   bool led_on = state.led_on;
+  fsm_state_t current_state = state.current_state;
+
+  switch (current_state) {
+    case FSM_WAITING:
+      fsm_waiting();
+      break;
+    default:
+      break;
+  }
 
   if(has_timer_elapsed(now, loop_timer, LOOP_SPEED_MS)){
-    Serial.println("+");
     state.loop_timer = now;
     digitalWrite(LED_BUILTIN, led_on);
     state.led_on = !led_on;
+    comms_check();
   }
+}
+
+////////////
+
+void fsm_waiting(void){
+  
 }

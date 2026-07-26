@@ -1,5 +1,12 @@
+#include "api/Common.h"
+#include "Arduino.h"
+#include <sys/_stdint.h>
 #include "uart_hal.h"
+#include <SerialTransfer.h>
 
+SerialTransfer cable_comms;
+
+constexpr uint16_t BAUD_RATE = 9600U;
 
 typedef enum{
   COMSTATE_ZERO_COUNT = 0U,
@@ -27,13 +34,18 @@ comms_state_t comms_init(const comms_system_type_t system_type){
   if((system_type <= COM_ZERO_COUNT) || (system_type >= COM_END_COUNT)){
     return COMMS_INVALID_PARAMETER;
   }
+  Serial1.begin(BAUD_RATE);
+  while(!Serial1){
+    delay(1);
+  }
+  cable_comms.begin(Serial1);
   state.system_type = system_type;
   state.internal_fsm_state = COMSTATE_HOLD;
   state.initialised = true;
   return COMMS_OK;
 }
 
-comms_state_t comms_handle_state(void){
+comms_state_t comms_check(void){
   fsm_comstate_t internal_fsm_state = state.internal_fsm_state;
 
   switch (internal_fsm_state) {
@@ -49,5 +61,5 @@ comms_state_t comms_handle_state(void){
 // Private
 
 static void fsm_comstate_hold(void){
-  Serial.print("Comstate static");
+  Serial.println("Comstate static");
 }
