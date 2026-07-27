@@ -3,15 +3,19 @@
 #include <sys/_stdint.h>
 #include "uart_hal.h"
 #include <SerialTransfer.h>
+#include "time_helpers.h"
 
 SerialTransfer cable_comms;
 
 constexpr uint16_t BAUD_RATE = 9600U;
-constexpr uint32_t MAX_ACK_WAIT_MS = 3000U;
+constexpr uint32_t MAX_ACK_WAIT_MS = 5000U;
 
 typedef enum{
   COMSTATE_ZERO_COUNT = 0U,
   COMSTATE_HOLD,
+  COMSTATE_SEND_HANDSHAKE,
+  COMSTATE_WAIT_FOR_ACKNOWLEDGEMENT,
+  COMSTATE_DEBUG_SEQUENCE_END,
   COMSTATE_END_COUNT
 } fsm_comstate_t;
 
@@ -26,6 +30,10 @@ typedef struct{
 static comms_internal_state_t state = {};
 
 static void fsm_comstate_hold(void);
+static void fsm_comstate_wait_for_acknowledgement(void);
+static void fsm_comstate_send_handshake(void);
+
+static void fsm_comstate_debug_sequence_end(void);
 
 // Public API
 
@@ -49,12 +57,19 @@ comms_state_t comms_init(const comms_system_type_t system_type){
 }
 
 comms_state_t comms_check(void){
-  fsm_comstate_t internal_fsm_state = state.internal_fsm_state;
 
-  switch (internal_fsm_state) {
+  switch (state.internal_fsm_state) {
     case COMSTATE_HOLD:
       fsm_comstate_hold();
       break;
+    case COMSTATE_WAIT_FOR_ACKNOWLEDGEMENT:
+      fsm_comstate_wait_for_acknowledgement();
+      break;
+    case COMSTATE_SEND_HANDSHAKE:
+      fsm_comstate_send_handshake();
+      break;
+    case COMSTATE_DEBUG_SEQUENCE_END:
+      fsm_comstate_debug_sequence_end();
     default:
       break;
   }
@@ -65,4 +80,32 @@ comms_state_t comms_check(void){
 
 static void fsm_comstate_hold(void){
   Serial.println("Comstate static");
+}
+
+static void fsm_comstate_wait_for_acknowledgement(void){
+  uint32_t now = millis();
+  uint32_t ack_wait_timer_ms = state.ack_wait_timer_ms;
+
+  if(has_timer_elapsed(now, ack_wait_timer_ms, MAX_ACK_WAIT_MS)){
+    Serial.println("Timer expired");
+    state.internal_fsm_state = COMSTATE_DEBUG_SEQUENCE_END;
+    return;
+  }
+}
+
+static void fsm_comstate_send_handshake(void){
+  Serial.println("Handshake sent");
+  /* Send command here */
+  state.ack_wait_timer_ms = millis();
+  state.internal_fsm_state = COMSTATE_WAIT_FOR_ACKNOWLEDGEMENT;
+}
+
+
+
+
+
+
+static void fsm_comstate_debug_sequence_end(void){
+  Serial.println("Sequence end");
+  for(;;);
 }
