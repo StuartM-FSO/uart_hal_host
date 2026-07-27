@@ -18,20 +18,11 @@ typedef enum{
   COMSTATE_END_COUNT
 } comstate_t;
 
-typedef enum{
-  COMLOOP_UNITIALISED,
-  COMLOOP_COMMAND_RECEIVED,
-  COMLOOP_COMMAND_ACKNOWLEDGED,
-  COMLOOP_COMMAND_COMPLETE,
-  COMLOOP_FAILED
-} comloop_state_t;
-
 typedef struct{
   bool initialised;
   comms_system_type_t system_type;
   comstate_t internal_state;
   uint32_t ack_wait_timer_ms;
-  comloop_state_t comloop_state;
 } comms_internal_state_t;
 
 
@@ -67,7 +58,6 @@ comms_return_t comms_init(const comms_system_type_t system_type){
   state.system_type = system_type;
   state.internal_state = COMSTATE_LISTEN;
   state.ack_wait_timer_ms = 0U;
-  state.comloop_state = COMLOOP_UNITIALISED;
   state.initialised = true;
   return COMMS_OK;
 }
@@ -110,7 +100,6 @@ static comstate_t process_command(const tx_command_t received_command){
   switch (received_command) {
     case TX_HANDSHAKE_REQUEST:
       Serial.println("Command processed - TX_HANDSHAKE_REQUEST");
-      state.comloop_state = COMLOOP_COMMAND_RECEIVED;
       transition_to = COMSTATE_ACKNOWLEDGE_HANDSHAKE;
       break;
     case TX_HANDSHAKE_ACKNOWLEDGED:
@@ -183,7 +172,6 @@ static void comstate_wait_for_acknowledgement(void){
 static void comstate_acknowledge_handshake(void){
   Serial.println("Handshake acknowledged");
   serial1_send_command(TX_HANDSHAKE_ACKNOWLEDGED);
-  state.comloop_state = COMLOOP_COMMAND_ACKNOWLEDGED;
   state_transition(COMSTATE_LISTEN);
 }
 
