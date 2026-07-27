@@ -17,10 +17,10 @@ typedef enum{
   COMMS_UNINITIALISED,
   COMMS_SERIAL1_FAILED_INIT,
   COMMS_FAILED
-} comms_state_t;
+} comms_return_t;
 
-comms_state_t comms_init(const comms_system_type_t system_type);
-comms_state_t comms_check(void);
-comms_state_t comms_handshake(void);
+comms_return_t comms_init(const comms_system_type_t system_type);
+comms_return_t comms_check(void);
+comms_return_t comms_handshake(void);
 
 #endif

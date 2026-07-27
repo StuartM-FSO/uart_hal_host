@@ -7,9 +7,18 @@
 typedef enum{
   SER_OK,
   SER_UNITIIALISED,
-  SER_INVALID_PARAMETER
+  SER_INVALID_PARAMETER,
+  SER_NOTHING_SENT
 } serial_state_t;
 
-serial_state_t serial1_init();
+typedef enum{
+  TX_UNINITIALISED,
+  TX_HANDSHAKE_REQUEST,
+  TX_HANDSHAKE_ACKNOWLEDGED
+} tx_command_t;
+
+serial_state_t serial1_init(void);
+serial_state_t serial1_listen_for_command(tx_command_t * const command);
+serial_state_t serial1_send_command(const tx_command_t command);
 
 #endif
