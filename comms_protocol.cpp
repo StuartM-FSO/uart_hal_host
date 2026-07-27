@@ -25,11 +25,17 @@ typedef struct{
 
 static comms_internal_state_t state = {};
 
+
+// Private function declarations
+//    FSM
 static void comstate_hold(void);
 static void comstate_wait_for_acknowledgement(void);
 static void comstate_send_handshake(void);
 
 static void comstate_debug_sequence_end(void);
+
+//    General
+static void state_transition(comstate_t state);
 
 // Public API
 
@@ -72,6 +78,10 @@ comms_state_t comms_check(void){
 
 // Private
 
+static void state_transition(comstate_t new_state){
+  state.internal_state = new_state;
+}
+
 static void comstate_hold(void){
   Serial.println("Comstate static");
 }
@@ -82,7 +92,7 @@ static void comstate_wait_for_acknowledgement(void){
 
   if(has_timer_elapsed(now, ack_wait_timer_ms, MAX_ACK_WAIT_MS)){
     Serial.println("Timer expired");
-    state.internal_state = COMSTATE_DEBUG_SEQUENCE_END;
+    state_transition(COMSTATE_DEBUG_SEQUENCE_END);
     return;
   }
 }
@@ -91,7 +101,7 @@ static void comstate_send_handshake(void){
   Serial.println("Handshake sent");
   /* Send command here */
   state.ack_wait_timer_ms = millis();
-  state.internal_state = COMSTATE_WAIT_FOR_ACKNOWLEDGEMENT;
+  state_transition(COMSTATE_WAIT_FOR_ACKNOWLEDGEMENT);
 }
 
 
