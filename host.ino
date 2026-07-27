@@ -1,4 +1,4 @@
-#include "uart_hal.h"
+#include "comms_protocol.h"
 #include "time_helpers.h"
 
 constexpr uint32_t LOOP_SPEED_MS = 1000U;
@@ -24,7 +24,10 @@ void setup() {
   Serial.println("Host starting");
   pinMode(LED_BUILTIN, OUTPUT);
 
-  comms_init(COM_TYPE_HOST);
+  if(comms_init(COM_TYPE_HOST) != COMMS_OK){
+    Serial.println("Init failed");
+    for(;;);
+  }
   state.loop_timer = millis();
   state.led_on = false;
   state.current_state = FSM_WAITING;
