@@ -7,6 +7,7 @@
 SerialTransfer cable_comms;
 
 constexpr uint16_t BAUD_RATE = 9600U;
+constexpr uint32_t MAX_ACK_WAIT_MS = 3000U;
 
 typedef enum{
   COMSTATE_ZERO_COUNT = 0U,
@@ -18,6 +19,7 @@ typedef struct{
   bool initialised;
   comms_system_type_t system_type;
   fsm_comstate_t internal_fsm_state;
+  uint32_t ack_wait_timer_ms;
 } comms_internal_state_t;
 
 
@@ -41,6 +43,7 @@ comms_state_t comms_init(const comms_system_type_t system_type){
   cable_comms.begin(Serial1);
   state.system_type = system_type;
   state.internal_fsm_state = COMSTATE_HOLD;
+  state.ack_wait_timer_ms = 0U;
   state.initialised = true;
   return COMMS_OK;
 }
