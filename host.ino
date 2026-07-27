@@ -16,6 +16,8 @@ typedef struct{
 
 loop_state_t state = {};
 
+bool run_once = false;
+
 void setup() {
   Serial.begin(115200);
   while(!Serial){
@@ -52,12 +54,15 @@ void loop() {
     state.loop_timer = now;
     digitalWrite(LED_BUILTIN, led_on);
     state.led_on = !led_on;
-    comms_check();
   }
 }
 
 ////////////
 
 void fsm_waiting(void){
-  
+  comms_check();
+  if(!run_once){
+    comms_handshake();
+    run_once = true;
+  }
 }

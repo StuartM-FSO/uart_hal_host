@@ -8,10 +8,11 @@ constexpr uint32_t MAX_ACK_WAIT_MS = 5000U;
 
 typedef enum{
   COMSTATE_ZERO_COUNT = 0U,
-  COMSTATE_HOLD,
+  COMSTATE_LISTEN,
   COMSTATE_SEND_HANDSHAKE,
   COMSTATE_WAIT_FOR_ACKNOWLEDGEMENT,
   COMSTATE_DEBUG_SEQUENCE_END,
+  COMSTATE_TIMEOUT,
   COMSTATE_END_COUNT
 } comstate_t;
 
@@ -28,9 +29,10 @@ static comms_internal_state_t state = {};
 
 // Private function declarations
 //    FSM
-static void comstate_hold(void);
+static void comstate_listen(void);
 static void comstate_wait_for_acknowledgement(void);
 static void comstate_send_handshake(void);
+static void comstate_timeout(void);
 
 static void comstate_debug_sequence_end(void);
 
@@ -50,7 +52,7 @@ comms_state_t comms_init(const comms_system_type_t system_type){
     return COMMS_SERIAL1_FAILED_INIT;
   }
   state.system_type = system_type;
-  state.internal_state = COMSTATE_HOLD;
+  state.internal_state = COMSTATE_LISTEN;
   state.ack_wait_timer_ms = 0U;
   state.initialised = true;
   return COMMS_OK;
@@ -59,14 +61,17 @@ comms_state_t comms_init(const comms_system_type_t system_type){
 comms_state_t comms_check(void){
 
   switch (state.internal_state) {
-    case COMSTATE_HOLD:
-      comstate_hold();
+    case COMSTATE_LISTEN:
+      comstate_listen();
       break;
     case COMSTATE_WAIT_FOR_ACKNOWLEDGEMENT:
       comstate_wait_for_acknowledgement();
       break;
     case COMSTATE_SEND_HANDSHAKE:
       comstate_send_handshake();
+      break;
+    case COMSTATE_TIMEOUT:
+      comstate_timeout();
       break;
     case COMSTATE_DEBUG_SEQUENCE_END:
       comstate_debug_sequence_end();
@@ -76,14 +81,18 @@ comms_state_t comms_check(void){
   return COMMS_OK;
 }
 
+comms_state_t comms_handshake(void){
+  state_transition(COMSTATE_SEND_HANDSHAKE);
+}
+
 // Private
 
 static void state_transition(comstate_t new_state){
   state.internal_state = new_state;
 }
 
-static void comstate_hold(void){
-  Serial.println("Comstate static");
+static void comstate_listen(void){
+
 }
 
 static void comstate_wait_for_acknowledgement(void){
@@ -102,6 +111,11 @@ static void comstate_send_handshake(void){
   /* Send command here */
   state.ack_wait_timer_ms = millis();
   state_transition(COMSTATE_WAIT_FOR_ACKNOWLEDGEMENT);
+}
+
+static void comstate_timeout(void){
+  Serial.println("Timed out");
+  state_transition(COMSTATE_LISTEN);
 }
 
 

@@ -15,10 +15,12 @@ typedef enum{
   COMMS_OK,
   COMMS_INVALID_PARAMETER,
   COMMS_UNINITIALISED,
-  COMMS_SERIAL1_FAILED_INIT
+  COMMS_SERIAL1_FAILED_INIT,
+  COMMS_FAILED
 } comms_state_t;
 
 comms_state_t comms_init(const comms_system_type_t system_type);
 comms_state_t comms_check(void);
+comms_state_t comms_handshake(void);
 
 #endif
