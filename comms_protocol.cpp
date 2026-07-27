@@ -4,7 +4,7 @@
 #include "time_helpers.h"
 #include "serial1_hal.h"
 
-constexpr uint32_t MAX_ACK_WAIT_MS = 5000U;
+constexpr uint32_t MAX_ACK_WAIT_MS = 2000U;
 
 typedef enum{
   COMSTATE_ZERO_COUNT = 0U,
@@ -101,7 +101,7 @@ static void comstate_wait_for_acknowledgement(void){
 
   if(has_timer_elapsed(now, ack_wait_timer_ms, MAX_ACK_WAIT_MS)){
     Serial.println("Timer expired");
-    state_transition(COMSTATE_DEBUG_SEQUENCE_END);
+    state_transition(COMSTATE_TIMEOUT);
     return;
   }
 }
