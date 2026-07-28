@@ -18,11 +18,18 @@ typedef enum{
   COMSTATE_END_COUNT
 } comstate_t;
 
+typedef enum{
+  REMOTE_UNINITIALISED,
+  REMOTE_CONNECTED,
+  REMOTE_NOT_CONNECTED
+} remote_t;
+
 typedef struct{
   bool initialised;
   comms_system_type_t system_type;
   comstate_t internal_state;
   uint32_t ack_wait_timer_ms;
+  remote_t remote_device_state;
 } comms_internal_state_t;
 
 
@@ -58,6 +65,7 @@ comms_return_t comms_init(const comms_system_type_t system_type){
   state.system_type = system_type;
   state.internal_state = COMSTATE_LISTEN;
   state.ack_wait_timer_ms = 0U;
+  state.remote_device_state = REMOTE_UNINITIALISED;
   state.initialised = true;
   return COMMS_OK;
 }
@@ -147,6 +155,7 @@ static void comstate_wait_for_acknowledgement(void){
 
   if(result == SER_OK){
     next_state_transition = process_command(command);
+    state.remote_device_state = REMOTE_CONNECTED;
     Serial.println("Handshake acknowledgement received");
   }
 
@@ -156,13 +165,14 @@ static void comstate_wait_for_acknowledgement(void){
 
   if((result == SER_INVALID_PARAMETER) || (result == SER_UNITIIALISED)){
     Serial.println("Failed");
-    for(;;);
+    state.remote_device_state = REMOTE_NOT_CONNECTED;
     // Handle errors here
   }
 
   if(has_timer_elapsed(now, ack_wait_timer_ms, MAX_ACK_WAIT_MS)){
     Serial.println("Timer expired");
     state_transition(COMSTATE_TIMEOUT);
+    state.remote_device_state = REMOTE_NOT_CONNECTED;
     return;
   }
 
@@ -179,6 +189,7 @@ static void comstate_send_handshake(void){
   Serial.println("Handshake sent");
   serial1_send_command(TX_HANDSHAKE_REQUEST);
   state.ack_wait_timer_ms = millis();
+  state.remote_device_state = REMOTE_UNINITIALISED;
   state_transition(COMSTATE_WAIT_FOR_ACKNOWLEDGEMENT);
 }
 
