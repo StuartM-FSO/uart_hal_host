@@ -160,7 +160,10 @@ static void state_transition(comstate_t new_state){
 }
 
 static void comstate_send_data_request(void){
-  if(state.system_type == COM_TYPE_HOST){
+  if(!state.system_type == COM_TYPE_CLIENT){
+    return;
+  }
+  if(!state.remote_device_connected){
     return;
   }
 
