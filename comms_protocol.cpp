@@ -18,7 +18,6 @@ typedef enum{
   COMSTATE_END_COUNT
 } comstate_t;
 
-
 typedef struct{
   bool initialised;
   bool handshake_timer_running;
@@ -43,7 +42,7 @@ static void comstate_debug_sequence_end(void);
 
 //    General
 static void state_transition(comstate_t state);
-static comstate_t process_command(const tx_command_t received_command);
+static comstate_t process_command(const comstate_t current_state, const tx_command_t received_command);
 
 // Public API
 
@@ -98,20 +97,37 @@ comms_return_t comms_handshake(void){
 
 // Private
 
-static comstate_t process_command(const tx_command_t received_command){
+static comstate_t process_command(const comstate_t current_state, const tx_command_t received_command){
   comstate_t transition_to = COMSTATE_UNINITIALISED;
 
-  switch (received_command) {
-    case TX_HANDSHAKE_REQUEST:
-      Serial.println("Command processed - TX_HANDSHAKE_REQUEST");
-      transition_to = COMSTATE_ACKNOWLEDGE_HANDSHAKE;
-      break;
-    case TX_HANDSHAKE_ACKNOWLEDGED:
-      Serial.println("Command processed - TX_HANDSHAKE_ACKNOWLEDGED");
-      transition_to = COMSTATE_LISTEN;
-      break;
-    default:
-      break;
+  if(current_state == COMSTATE_WAIT_FOR_ACKNOWLEDGEMENT){
+    switch (received_command) {
+      case TX_HANDSHAKE_ACKNOWLEDGED:
+        Serial.println("Command processed - TX_HANDSHAKE_ACKNOWLEDGED");
+        transition_to = COMSTATE_LISTEN;
+        break;
+      default:
+        // Illegal command
+        // How to process?
+        Serial.print("Illegal command received, code: ");
+        Serial.println(received_command);
+        break;
+    }
+  }
+
+  if(current_state == COMSTATE_LISTEN){
+    switch (received_command) {
+      case TX_HANDSHAKE_REQUEST:
+        Serial.println("Command processed - TX_HANDSHAKE_REQUEST");
+        transition_to = COMSTATE_ACKNOWLEDGE_HANDSHAKE;
+        break;
+      default:
+        // Illegal command
+        // How to process?
+        Serial.print("Illegal command received, code: ");
+        Serial.println(received_command);
+        break;
+    }
   }
   return transition_to;
 }
@@ -131,7 +147,7 @@ static void comstate_listen(void){
     Serial.print("Command received: ");
     Serial.println(command);
     // Check if command is valid
-    transition_to = process_command(command);
+    transition_to = process_command(COMSTATE_LISTEN, command);
     state_transition(transition_to);
   }
   if((result == SER_INVALID_PARAMETER) || (result == SER_UNINITIALISED)){
@@ -150,7 +166,7 @@ static void comstate_wait_for_acknowledgement(void){
   comstate_t next_state_transition = COMSTATE_UNINITIALISED;
 
   if(result == SER_OK){
-    next_state_transition = process_command(command);
+    next_state_transition = process_command(COMSTATE_WAIT_FOR_ACKNOWLEDGEMENT, command);
     state.handshake_timer_running = false;
     Serial.println("Handshake acknowledgement received");
   }
