@@ -8,7 +8,7 @@ constexpr uint32_t MAX_ACK_WAIT_MS = 2000U;
 
 typedef enum{
   COMSTATE_ZERO_COUNT = 0U,
-  COMSTATE_UNITIALISED,
+  COMSTATE_UNINITIALISED,
   COMSTATE_LISTEN,
   COMSTATE_SEND_HANDSHAKE,
   COMSTATE_WAIT_FOR_ACKNOWLEDGEMENT,
@@ -106,7 +106,7 @@ comms_return_t comms_handshake(void){
 // Private
 
 static comstate_t process_command(const tx_command_t received_command){
-  comstate_t transition_to = COMSTATE_UNITIALISED;
+  comstate_t transition_to = COMSTATE_UNINITIALISED;
 
   switch (received_command) {
     case TX_HANDSHAKE_REQUEST:
@@ -132,7 +132,7 @@ static void state_transition(comstate_t new_state){
 static void comstate_listen(void){
   tx_command_t command = TX_UNINITIALISED;
   serial_state_t result = serial1_listen_for_command(&command);
-  comstate_t transition_to = COMSTATE_UNITIALISED;
+  comstate_t transition_to = COMSTATE_UNINITIALISED;
 
   if(result == SER_OK){
     Serial.print("Command received: ");
@@ -141,7 +141,7 @@ static void comstate_listen(void){
     transition_to = process_command(command);
     state_transition(transition_to);
   }
-  if((result == SER_INVALID_PARAMETER) || (result == SER_UNITIIALISED)){
+  if((result == SER_INVALID_PARAMETER) || (result == SER_UNINITIALISED)){
     // Handle error
   }
   if(result == SER_NOTHING_SENT){
@@ -154,11 +154,12 @@ static void comstate_wait_for_acknowledgement(void){
   uint32_t ack_wait_timer_ms = state.ack_wait_timer_ms;
   tx_command_t command = TX_UNINITIALISED;
   serial_state_t result = serial1_listen_for_command(&command);
-  comstate_t next_state_transition = COMSTATE_UNITIALISED;
+  comstate_t next_state_transition = COMSTATE_UNINITIALISED;
 
   if(result == SER_OK){
     next_state_transition = process_command(command);
     state.remote_device_state = REMOTE_CONNECTED;
+    state.handshake_timer_running = false;
     Serial.println("Handshake acknowledgement received");
   }
 
@@ -166,9 +167,10 @@ static void comstate_wait_for_acknowledgement(void){
     next_state_transition = COMSTATE_WAIT_FOR_ACKNOWLEDGEMENT;
   }
 
-  if((result == SER_INVALID_PARAMETER) || (result == SER_UNITIIALISED)){
+  if((result == SER_INVALID_PARAMETER) || (result == SER_UNINITIALISED)){
     Serial.println("Failed");
     state.remote_device_state = REMOTE_NOT_CONNECTED;
+    state.handshake_timer_running = false;
     // Handle errors here
   }
 

@@ -6,7 +6,7 @@
 
 typedef enum{
   SER_OK,
-  SER_UNITIIALISED,
+  SER_UNINITIALISED,
   SER_INVALID_PARAMETER,
   SER_NOTHING_SENT
 } serial_state_t;

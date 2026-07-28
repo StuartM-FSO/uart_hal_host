@@ -44,7 +44,7 @@ serial_state_t serial1_listen_for_command(tx_command_t * const command){
     return SER_INVALID_PARAMETER;
   }
   if(!state.initialised){
-    return SER_UNITIIALISED;
+    return SER_UNINITIALISED;
   }
   if(!comms.available()){
     return SER_NOTHING_SENT;
