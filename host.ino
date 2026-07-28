@@ -60,9 +60,13 @@ void loop() {
 ////////////
 
 void fsm_waiting(void){
+  uint32_t now = millis();
+  uint32_t loop_timer = state.loop_timer;
+
   comms_check();
-  if(!run_once){
+  if(has_timer_elapsed(now, loop_timer, LOOP_SPEED_MS)){
+    Serial.println("Loop makes handshake request");
     comms_handshake();
-    run_once = true;
+    state.loop_timer = now;
   }
 }
