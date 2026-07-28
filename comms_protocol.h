@@ -22,5 +22,6 @@ typedef enum{
 comms_return_t comms_init(const comms_system_type_t system_type);
 comms_return_t comms_check(void);
 comms_return_t comms_handshake(void);
+comms_return_t comms_data_packet_request(void);
 
 #endif

@@ -13,6 +13,7 @@ typedef enum{
   COMSTATE_SEND_HANDSHAKE,
   COMSTATE_WAIT_FOR_ACKNOWLEDGEMENT,
   COMSTATE_ACKNOWLEDGE_HANDSHAKE,
+  COMSTATE_SEND_DATA_REQUEST,
   COMSTATE_DEBUG_SEQUENCE_END,
   COMSTATE_TIMEOUT,
   COMSTATE_END_COUNT
@@ -37,6 +38,7 @@ static void comstate_wait_for_acknowledgement(void);
 static void comstate_send_handshake(void);
 static void comstate_timeout(void);
 static void comstate_acknowledge_handshake(void);
+static void comstate_send_data_request(void);
 
 static void comstate_debug_sequence_end(void);
 
@@ -65,6 +67,9 @@ comms_return_t comms_init(const comms_system_type_t system_type){
 }
 
 comms_return_t comms_check(void){
+  if(!state.initialised){
+    return COMMS_UNINITIALISED;
+  }
 
   switch (state.internal_state) {
     case COMSTATE_LISTEN:
@@ -82,6 +87,9 @@ comms_return_t comms_check(void){
     case COMSTATE_TIMEOUT:
       comstate_timeout();
       break;
+    case COMSTATE_SEND_DATA_REQUEST:
+      comstate_send_data_request();
+      break;
     case COMSTATE_DEBUG_SEQUENCE_END:
       comstate_debug_sequence_end();
     default:
@@ -91,7 +99,18 @@ comms_return_t comms_check(void){
 }
 
 comms_return_t comms_handshake(void){
+  if(!state.initialised){
+    return COMMS_UNINITIALISED;
+  }
   state_transition(COMSTATE_SEND_HANDSHAKE);
+  return COMMS_OK;
+}
+
+comms_return_t comms_data_packet_request(void){
+  if(!state.initialised){
+    return COMMS_UNINITIALISED;
+  }
+  state_transition(COMSTATE_SEND_DATA_REQUEST);
   return COMMS_OK;
 }
 
@@ -136,6 +155,15 @@ static comstate_t process_command(const comstate_t current_state, const tx_comma
 
 static void state_transition(comstate_t new_state){
   state.internal_state = new_state;
+}
+
+static void comstate_send_data_request(void){
+  if(state.system_type == COM_TYPE_HOST){
+    return;
+  }
+
+  Serial.println("Data packet request sent");
+  state_transition(COMSTATE_DEBUG_SEQUENCE_END);
 }
 
 static void comstate_listen(void){
