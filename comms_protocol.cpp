@@ -22,6 +22,7 @@ typedef enum{
 typedef struct{
   bool initialised;
   bool handshake_timer_running;
+  bool remote_device_connected;
   comms_system_type_t system_type;
   comstate_t internal_state;
   uint32_t ack_wait_timer_ms;
@@ -62,6 +63,7 @@ comms_return_t comms_init(const comms_system_type_t system_type){
   state.internal_state = COMSTATE_LISTEN;
   state.ack_wait_timer_ms = 0U;
   state.handshake_timer_running = false;
+  state.remote_device_connected = false;
   state.initialised = true;
   return COMMS_OK;
 }
@@ -196,6 +198,7 @@ static void comstate_wait_for_acknowledgement(void){
   if(result == SER_OK){
     next_state_transition = process_command(COMSTATE_WAIT_FOR_ACKNOWLEDGEMENT, command);
     state.handshake_timer_running = false;
+    state.remote_device_connected = true;
     Serial.println("Handshake acknowledgement received");
   }
 
@@ -206,6 +209,7 @@ static void comstate_wait_for_acknowledgement(void){
   if((result == SER_INVALID_PARAMETER) || (result == SER_UNINITIALISED)){
     Serial.println("Failed");
     state.handshake_timer_running = false;
+    state.remote_device_connected = false;
     // Handle errors here
   }
 
@@ -213,6 +217,7 @@ static void comstate_wait_for_acknowledgement(void){
     Serial.println("Timer expired");
     state_transition(COMSTATE_TIMEOUT);
     state.handshake_timer_running = false;
+    state.remote_device_connected = false;
     return;
   }
 
@@ -229,6 +234,7 @@ static void comstate_send_handshake(void){
   if(!state.handshake_timer_running){
     Serial.println("Handshake sent");
     serial1_send_command(TX_HANDSHAKE_REQUEST);
+    state.remote_device_connected = false;
     state.ack_wait_timer_ms = millis();
     state.handshake_timer_running = true;  
   } else {

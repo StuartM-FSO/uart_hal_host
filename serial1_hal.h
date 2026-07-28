@@ -14,7 +14,8 @@ typedef enum{
 typedef enum{
   TX_UNINITIALISED,
   TX_HANDSHAKE_REQUEST,
-  TX_HANDSHAKE_ACKNOWLEDGED
+  TX_HANDSHAKE_ACKNOWLEDGED,
+  TX_REQUEST_DATA_PACKET
 } tx_command_t;
 
 serial_state_t serial1_init(void);
