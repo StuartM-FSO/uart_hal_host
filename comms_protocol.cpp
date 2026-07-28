@@ -100,6 +100,7 @@ comms_return_t comms_check(void){
 
 comms_return_t comms_handshake(void){
   state_transition(COMSTATE_SEND_HANDSHAKE);
+  return COMMS_OK;
 }
 
 // Private
