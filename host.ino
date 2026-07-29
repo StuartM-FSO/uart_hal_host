@@ -64,9 +64,5 @@ void fsm_waiting(void){
   uint32_t loop_timer = state.loop_timer;
 
   comms_check();
-  if(has_timer_elapsed(now, loop_timer, LOOP_SPEED_MS)){
-    Serial.println("Loop makes handshake request");
-    comms_handshake();
-    state.loop_timer = now;
-  }
+  
 }
