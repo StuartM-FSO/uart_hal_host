@@ -5,9 +5,18 @@
 #include <stdint.h>
 #include <SerialTransfer.h>
 
-SerialTransfer comms;
 
 constexpr uint16_t BAUD_RATE = 9600U;
+constexpr uint8_t THREE_CELLS = 3U;
+
+struct __attribute__((packed)) STRUCT {
+  tx_command_t tx_command;
+  uint32_t id;
+  uint16_t tx_cell[THREE_CELLS];
+} testStruct;
+
+SerialTransfer comms;
+
 
 typedef enum{
   COMM_HANDSHAKE,
@@ -17,6 +26,7 @@ typedef enum{
 
 typedef struct{
   bool initialised;
+  uint32_t last_packet_id;
 } internal_state_t;
 
 static internal_state_t state = {};
