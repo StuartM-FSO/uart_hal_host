@@ -24,6 +24,6 @@ comms_return_t comms_init(const comms_system_type_t system_type);
 comms_return_t comms_check(void);
 comms_return_t comms_handshake(void);
 comms_return_t comms_data_packet_request(void);
-comms_return_t comms_prepare_payload(uint16_t ppo2_x1000[]);
+comms_return_t comms_prepare_payload(const uint16_t * ppo2_x1000);
 
 #endif

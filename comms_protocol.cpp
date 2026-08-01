@@ -1,6 +1,3 @@
-#include "usb/SerialUSB.h"
-#include "api/Common.h"
-#include <sys/_stdint.h>
 #include <Arduino.h>
 #include <stdint.h>
 #include "comms_protocol.h"
@@ -8,8 +5,7 @@
 #include "serial1_hal.h"
 
 constexpr uint32_t MAX_ACK_WAIT_MS = 2000U;
-constexpr uint32_t MAX_DATA_PACKET_RQ_WAIT_MS = 1000U;
-constexpr uint32_t MAX_DATA_CONFIRMATION_WAIT_MS = 500U;
+constexpr uint32_t MAX_DATA_PACKET_RQ_WAIT_MS = 500U;
 constexpr uint8_t THREE_CELLS = 3U;
 
 typedef enum{
@@ -52,8 +48,6 @@ static void comstate_acknowledge_handshake(void);
 static void comstate_send_data_request(void);
 static void comstate_wait_for_data_packet(void);
 static void comstate_send_data_packet(void);
-static void comstate_wait_for_data_confirmation(void);
-static void comstate_send_data_confirmation(void);
 
 static void comstate_debug_sequence_end(void);
 
@@ -141,7 +135,7 @@ comms_return_t comms_data_packet_request(void){
   return COMMS_OK;
 }
 
-comms_return_t comms_prepare_payload(uint16_t ppo2_x1000[]){
+comms_return_t comms_prepare_payload(const uint16_t * ppo2_x1000){
   if(!state.initialised){
     return COMMS_UNINITIALISED;
   }
@@ -154,6 +148,7 @@ comms_return_t comms_prepare_payload(uint16_t ppo2_x1000[]){
   for(uint8_t channel = 0U; channel < THREE_CELLS; channel++){
     payload.cell[channel] = ppo2_x1000[channel];
   }
+  return COMMS_OK;
 }
 
 // Private
@@ -170,6 +165,7 @@ static comstate_t process_command(const comstate_t current_state, const tx_comma
       default:
         // Illegal command
         // How to process?
+        transition_to = COMSTATE_DEBUG_SEQUENCE_END;
         Serial.print("Illegal command received, code: ");
         Serial.println(received_command);
         break;
@@ -189,6 +185,7 @@ static comstate_t process_command(const comstate_t current_state, const tx_comma
       default:
         // Illegal command
         // How to process?
+        transition_to = COMSTATE_DEBUG_SEQUENCE_END;
         Serial.print("Illegal command received, code: ");
         Serial.println(received_command);
         break;
@@ -214,16 +211,17 @@ static void comstate_wait_for_data_packet(void){
   }
   if(serial1_listen_for_data_packet() == SER_OK){
     Serial.println("Packet received");
-    state.handshake_timer_running = false;
+    state.data_packet_request_timer_running = false;
     state_transition(COMSTATE_LISTEN);
   }
-  return;
 }
 
 static void comstate_send_data_packet(void){
   Serial.print("Sending data packet ID: ");
   Serial.println(payload.id);
-  serial1_send_data_packet(payload);
+  if(serial1_send_data_packet(payload) != SER_OK){
+    // Handle error
+  }
   payload.sent = true;
   state_transition(COMSTATE_LISTEN);
 }
@@ -237,7 +235,9 @@ static void comstate_send_data_request(void){
     state_transition(COMSTATE_WAIT_FOR_DATA_PACKET);
     return;
   }
-  serial1_send_command(TX_REQUEST_DATA_PACKET);
+  if(serial1_send_command(TX_REQUEST_DATA_PACKET) != SER_OK){
+    // Handle error
+  }
   Serial.println("Data packet request sent");
   state.data_packet_request_timer_ms = millis();
   state.data_packet_request_timer_running = true;
@@ -260,9 +260,6 @@ static void comstate_listen(void){
   if((result == SER_INVALID_PARAMETER) || (result == SER_UNINITIALISED)){
     // Handle error
   }
-  if(result == SER_NOTHING_SENT){
-
-  }
 }
 
 static void comstate_wait_for_acknowledgement(void){
@@ -278,14 +275,14 @@ static void comstate_wait_for_acknowledgement(void){
     Serial.println("Handshake acknowledgement received");
   }
 
-  if(result == SER_NOTHING_SENT){
-    next_state_transition = COMSTATE_WAIT_FOR_ACKNOWLEDGEMENT;
-  }
-
   if((result == SER_INVALID_PARAMETER) || (result == SER_UNINITIALISED)){
     Serial.println("Failed");
     state.handshake_timer_running = false;
     // Handle errors here
+  }
+
+  if(result == SER_NOTHING_SENT){
+    next_state_transition = state.internal_state;
   }
 
   if(has_timer_elapsed(now, ack_wait_timer_ms, MAX_ACK_WAIT_MS)){
@@ -300,7 +297,9 @@ static void comstate_wait_for_acknowledgement(void){
 
 static void comstate_acknowledge_handshake(void){
   Serial.println("Handshake acknowledged");
-  serial1_send_command(TX_HANDSHAKE_ACKNOWLEDGED);
+  if(serial1_send_command(TX_HANDSHAKE_ACKNOWLEDGED) != SER_OK){
+    // Handle error
+  }
   state.handshake_timer_running = false;
   state_transition(COMSTATE_LISTEN);
 }
@@ -311,7 +310,9 @@ static void comstate_send_handshake(void){
     return;
   }
   Serial.println("Handshake sent");
-  serial1_send_command(TX_HANDSHAKE_REQUEST);
+  if(serial1_send_command(TX_HANDSHAKE_REQUEST) != SER_OK){
+    // Handle error
+  }
   state.ack_wait_timer_ms = millis();
   state.handshake_timer_running = true;  
   state_transition(COMSTATE_WAIT_FOR_ACKNOWLEDGEMENT);
@@ -330,5 +331,7 @@ static void comstate_timeout(void){
 
 static void comstate_debug_sequence_end(void){
   Serial.println("Sequence end");
-  for(;;);
+  for(;;){
+    // Intentional halt for debug & testing purposes
+  }
 }
