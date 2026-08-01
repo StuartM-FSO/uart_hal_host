@@ -9,7 +9,8 @@ typedef enum{
   SER_OK,
   SER_UNINITIALISED,
   SER_INVALID_PARAMETER,
-  SER_NOTHING_SENT
+  SER_NOTHING_SENT,
+  SER_DATA_PACKET_TX_REFUSED
 } serial_state_t;
 
 typedef enum{
@@ -25,6 +26,6 @@ typedef enum{
 serial_state_t serial1_init(void);
 serial_state_t serial1_listen_for_command(tx_command_t * const command);
 serial_state_t serial1_send_command(const tx_command_t command);
-serial_state_t serial1_send_data_packet(uint32_t * const this_transmission_id);
+serial_state_t serial1_send_data_packet(uint16_t payload[]);
 
 #endif

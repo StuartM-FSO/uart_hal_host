@@ -75,5 +75,4 @@ void load_payload(){
   cells[1] = 2222U;
   cells[2] = 3333U;
 
-  comms_load_data_packet(cells);
 }

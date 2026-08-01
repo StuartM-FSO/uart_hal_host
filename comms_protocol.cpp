@@ -33,12 +33,9 @@ typedef struct{
   comstate_t internal_state;
   uint32_t ack_wait_timer_ms;
   uint32_t data_packet_request_timer_ms;
-  uint32_t last_packet_received_id;
-  bool data_packet_sent;
 } comms_internal_state_t;
 
 static comms_internal_state_t state = {};
-static uint16_t payload[THREE_CELLS] = {};
 
 
 // Private function declarations
@@ -49,8 +46,8 @@ static void comstate_send_handshake(void);
 static void comstate_timeout(void);
 static void comstate_acknowledge_handshake(void);
 static void comstate_send_data_request(void);
-static void comstate_wait_for_data_packet();
-static void comstate_send_data_packet();
+static void comstate_wait_for_data_packet(void);
+static void comstate_send_data_packet(void);
 
 static void comstate_debug_sequence_end(void);
 
@@ -75,8 +72,6 @@ comms_return_t comms_init(const comms_system_type_t system_type){
   state.ack_wait_timer_ms = 0U;
   state.handshake_timer_running = false;
   state.data_packet_request_timer_running = false;
-  state.last_packet_received_id = 0U;
-  state.data_packet_sent = false;
   state.initialised = true;
   return COMMS_OK;
 }
@@ -108,9 +103,6 @@ comms_return_t comms_check(void){
     case COMSTATE_WAIT_FOR_DATA_PACKET:
       comstate_wait_for_data_packet();
       break;
-    case COMSTATE_SEND_DATA_PACKET:
-      comstate_send_data_packet();
-      break;
     case COMSTATE_DEBUG_SEQUENCE_END:
       comstate_debug_sequence_end();
     default:
@@ -132,18 +124,6 @@ comms_return_t comms_data_packet_request(void){
     return COMMS_UNINITIALISED;
   }
   state_transition(COMSTATE_SEND_DATA_REQUEST);
-  return COMMS_OK;
-}
-
-comms_return_t comms_load_data_packet(uint16_t controller_cell_ppo2_X1000[]){
-  if(!state.initialised){
-    return COMMS_UNINITIALISED;
-  }
-  for(uint8_t channel = 0U; channel < THREE_CELLS; channel++){
-    payload[channel] = controller_cell_ppo2_X1000[channel];
-  }
-  state.data_packet_sent = false;
-  Serial.println("Data packet successfully loaded");
   return COMMS_OK;
 }
 
@@ -175,7 +155,7 @@ static comstate_t process_command(const comstate_t current_state, const tx_comma
         break;
       case TX_REQUEST_DATA_PACKET:
         Serial.println("Command processed - TX_REQUEST_DATA_PACKET");
-        transition_to = COMSTATE_SEND_DATA_PACKET;
+        // State transition here
         break;
       default:
         // Illegal command
@@ -194,11 +174,6 @@ static void state_transition(comstate_t new_state){
   state.internal_state = new_state;
 }
 
-static void comstate_send_data_packet(void){
-  Serial.println("Data packet sent");
-  state_transition(COMSTATE_DEBUG_SEQUENCE_END);
-}
-
 static void comstate_wait_for_data_packet(void){
   uint32_t now = millis();
   uint32_t timeout = state.data_packet_request_timer_ms;
@@ -208,6 +183,7 @@ static void comstate_wait_for_data_packet(void){
     state.data_packet_request_timer_running = false;
     state_transition(COMSTATE_LISTEN);
   }
+  return;
 }
 
 static void comstate_send_data_request(void){

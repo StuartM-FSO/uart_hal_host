@@ -26,7 +26,6 @@ typedef enum{
 
 typedef struct{
   bool initialised;
-  uint32_t last_packet_id;
 } internal_state_t;
 
 static internal_state_t state = {};
@@ -43,7 +42,6 @@ serial_state_t serial1_init(){
   }
   comms.begin(Serial1);
   state.initialised = true;
-  state.last_packet_id = 0U;
   return SER_OK;
 }
 
@@ -73,24 +71,18 @@ serial_state_t serial1_send_command(const tx_command_t command){
   return SER_OK;
 }
 
-serial_state_t serial1_send_data_packet(uint16_t payload[], uint32_t * const this_transmission_id){
+serial_state_t serial1_send_data_packet(uint16_t payload[]){
   uint16_t tx_size = 0U;
 
   if(!state.initialised){
     return SER_UNINITIALISED;
   }
-  if(this_transmission_id == NULL){
-    return SER_INVALID_PARAMETER;
-  }
 
   for(uint8_t channel = 0U; channel < THREE_CELLS; channel++){
     send_struct.tx_cell[channel] = payload[channel];
   }
-  state.last_packet_id++;
-  send_struct.id = state.last_packet_id;
   send_struct.tx_command = TX_PAYLOAD_ATTACHED;
-  *this_transmission_id = state.last_packet_id;
-
+  
   tx_size = comms.txObj(send_struct, tx_size);
   comms.sendData(tx_size);
   return SER_OK;
