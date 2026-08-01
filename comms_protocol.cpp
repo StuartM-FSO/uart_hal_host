@@ -103,6 +103,9 @@ comms_return_t comms_check(void){
     case COMSTATE_WAIT_FOR_DATA_PACKET:
       comstate_wait_for_data_packet();
       break;
+    case COMSTATE_SEND_DATA_PACKET:
+      comstate_send_data_packet();
+      break;
     case COMSTATE_DEBUG_SEQUENCE_END:
       comstate_debug_sequence_end();
     default:
@@ -155,7 +158,7 @@ static comstate_t process_command(const comstate_t current_state, const tx_comma
         break;
       case TX_REQUEST_DATA_PACKET:
         Serial.println("Command processed - TX_REQUEST_DATA_PACKET");
-        // State transition here
+        transition_to = COMSTATE_SEND_DATA_PACKET;
         break;
       default:
         // Illegal command
@@ -183,7 +186,17 @@ static void comstate_wait_for_data_packet(void){
     state.data_packet_request_timer_running = false;
     state_transition(COMSTATE_LISTEN);
   }
+  if(serial1_listen_for_data_packet() == SER_OK){
+    Serial.println("Packet received");
+    state_transition(COMSTATE_DEBUG_SEQUENCE_END);
+  }
   return;
+}
+
+static void comstate_send_data_packet(void){
+  Serial.println("Sending data packet");
+  serial1_send_data_packet();
+  state_transition(COMSTATE_DEBUG_SEQUENCE_END);
 }
 
 static void comstate_send_data_request(void){

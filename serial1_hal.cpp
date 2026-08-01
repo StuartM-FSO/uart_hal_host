@@ -71,21 +71,25 @@ serial_state_t serial1_send_command(const tx_command_t command){
   return SER_OK;
 }
 
-serial_state_t serial1_send_data_packet(uint16_t payload[]){
+serial_state_t serial1_send_data_packet(void){
   uint16_t tx_size = 0U;
+  char tx[5] = "BOOP";
 
-  if(!state.initialised){
-    return SER_UNINITIALISED;
-  }
-
-  for(uint8_t channel = 0U; channel < THREE_CELLS; channel++){
-    send_struct.tx_cell[channel] = payload[channel];
-  }
-  send_struct.tx_command = TX_PAYLOAD_ATTACHED;
-  
-  tx_size = comms.txObj(send_struct, tx_size);
+  tx_size = comms.txObj(tx);
   comms.sendData(tx_size);
   return SER_OK;
+}
+
+serial_state_t serial1_listen_for_data_packet(void){
+  uint16_t rx_size = 0U;
+  char rx[5] = {};
+
+  if(comms.available()){
+    rx_size = comms.rxObj(rx);
+    Serial.println(rx);
+    return SER_OK;
+  }
+  return SER_NOTHING_SENT;
 }
 
 
