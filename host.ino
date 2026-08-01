@@ -34,6 +34,7 @@ void setup() {
   state.led_on = false;
   state.current_state = FSM_WAITING;
   Serial.println("comms init as host");
+  load_payload();
 }
 
 void loop() {
@@ -65,4 +66,14 @@ void fsm_waiting(void){
 
   comms_check();
   
+}
+
+void load_payload(){
+  uint16_t cells[3] = {};
+
+  cells[0] = 1111U;
+  cells[1] = 2222U;
+  cells[2] = 3333U;
+
+  comms_load_data_packet(cells);
 }

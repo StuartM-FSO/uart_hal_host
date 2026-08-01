@@ -1,3 +1,4 @@
+#include <sys/_stdint.h>
 #ifndef COMMS_PROTOCOL_H
 #define COMMS_PROTOCOL_H
 
@@ -23,5 +24,6 @@ comms_return_t comms_init(const comms_system_type_t system_type);
 comms_return_t comms_check(void);
 comms_return_t comms_handshake(void);
 comms_return_t comms_data_packet_request(void);
+comms_return_t comms_load_data_packet(uint16_t controller_cell_ppo2_X1000[]);
 
 #endif
