@@ -123,6 +123,9 @@ comms_return_t comms_handshake(void){
 }
 
 comms_return_t comms_data_packet_request(void){
+  if(state.system_type == COM_TYPE_HOST){
+    return COMMS_INVALID_PARAMETER;
+  }
   if(!state.initialised){
     return COMMS_UNINITIALISED;
   }
@@ -188,7 +191,8 @@ static void comstate_wait_for_data_packet(void){
   }
   if(serial1_listen_for_data_packet() == SER_OK){
     Serial.println("Packet received");
-    state_transition(COMSTATE_DEBUG_SEQUENCE_END);
+    state.handshake_timer_running = false;
+    state_transition(COMSTATE_LISTEN);
   }
   return;
 }
