@@ -43,6 +43,7 @@ serial_state_t serial1_init(){
   }
   comms.begin(Serial1);
   state.initialised = true;
+  state.last_packet_id = 0U;
   return SER_OK;
 }
 

@@ -33,6 +33,7 @@ typedef struct{
   comstate_t internal_state;
   uint32_t ack_wait_timer_ms;
   uint32_t data_packet_request_timer_ms;
+  uint32_t last_packet_received_id;
 } comms_internal_state_t;
 
 typedef struct{
@@ -78,6 +79,7 @@ comms_return_t comms_init(const comms_system_type_t system_type){
   state.ack_wait_timer_ms = 0U;
   state.handshake_timer_running = false;
   state.data_packet_request_timer_running = false;
+  state.last_packet_received_id = 0U;
   state.initialised = true;
   return COMMS_OK;
 }
