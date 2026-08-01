@@ -8,6 +8,7 @@
 
 constexpr uint32_t MAX_ACK_WAIT_MS = 2000U;
 constexpr uint32_t MAX_DATA_PACKET_RQ_WAIT_MS = 1000U;
+constexpr uint32_t MAX_DATA_CONFIRMATION_WAIT_MS = 500U;
 constexpr uint8_t THREE_CELLS = 0U;
 
 typedef enum{
@@ -20,6 +21,7 @@ typedef enum{
   COMSTATE_SEND_DATA_REQUEST,
   COMSTATE_WAIT_FOR_DATA_PACKET,
   COMSTATE_SEND_DATA_PACKET,
+  COMSTATE_WAIT_FOR_DATA_CONFIRMATION,
   COMSTATE_DEBUG_SEQUENCE_END,
   COMSTATE_TIMEOUT,
   COMSTATE_END_COUNT
@@ -33,6 +35,8 @@ typedef struct{
   comstate_t internal_state;
   uint32_t ack_wait_timer_ms;
   uint32_t data_packet_request_timer_ms;
+  bool data_confirmation_pending;
+  uint32_t data_confirmation_timer_ms;
 } comms_internal_state_t;
 
 static comms_internal_state_t state = {};
@@ -48,6 +52,7 @@ static void comstate_acknowledge_handshake(void);
 static void comstate_send_data_request(void);
 static void comstate_wait_for_data_packet(void);
 static void comstate_send_data_packet(void);
+static void comstate_wait_for_data_confirmation(void);
 
 static void comstate_debug_sequence_end(void);
 
@@ -72,6 +77,8 @@ comms_return_t comms_init(const comms_system_type_t system_type){
   state.ack_wait_timer_ms = 0U;
   state.handshake_timer_running = false;
   state.data_packet_request_timer_running = false;
+  state.data_confirmation_timer_ms = 0U;
+  state.data_confirmation_pending = false;
   state.initialised = true;
   return COMMS_OK;
 }
@@ -108,6 +115,9 @@ comms_return_t comms_check(void){
       break;
     case COMSTATE_DEBUG_SEQUENCE_END:
       comstate_debug_sequence_end();
+    case COMSTATE_WAIT_FOR_DATA_CONFIRMATION:
+      comstate_wait_for_data_confirmation();
+      break;
     default:
       break;
   }
@@ -180,6 +190,33 @@ static void state_transition(comstate_t new_state){
   state.internal_state = new_state;
 }
 
+static void comstate_wait_for_data_confirmation(void){
+  tx_command_t received_command = TX_UNINITIALISED;
+  serial_state_t result = SER_UNINITIALISED;
+  comstate_t next_state = COMSTATE_UNINITIALISED;
+  uint32_t now = millis();
+  uint32_t data_confirmation_timer_ms = state.data_confirmation_timer_ms;
+
+  if(has_timer_elapsed(now, data_confirmation_timer_ms, MAX_DATA_CONFIRMATION_WAIT_MS)){
+    state.data_confirmation_pending = false;
+    Serial.println("Data confirmation timeout");
+    state_transition(COMSTATE_LISTEN);
+  }
+
+  result = serial1_listen_for_command(&received_command);
+  if(result == SER_NOTHING_SENT){
+    return;
+  }
+  if(result != SER_OK){
+    Serial.println("Fault in tx/rx");
+    state_transition(COMSTATE_DEBUG_SEQUENCE_END);
+    return;
+  }
+  Serial.print("Command received: ");
+  Serial.println(received_command);
+  state_transition(COMSTATE_DEBUG_SEQUENCE_END);
+}
+
 static void comstate_wait_for_data_packet(void){
   uint32_t now = millis();
   uint32_t timeout = state.data_packet_request_timer_ms;
@@ -200,7 +237,9 @@ static void comstate_wait_for_data_packet(void){
 static void comstate_send_data_packet(void){
   Serial.println("Sending data packet");
   serial1_send_data_packet();
-  state_transition(COMSTATE_DEBUG_SEQUENCE_END);
+  state_transition(COMSTATE_WAIT_FOR_DATA_CONFIRMATION);
+  state.data_confirmation_pending = true;
+  state.data_confirmation_timer_ms = millis();
 }
 
 static void comstate_send_data_request(void){
