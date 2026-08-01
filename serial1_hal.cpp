@@ -13,7 +13,7 @@ struct __attribute__((packed)) STRUCT {
   tx_command_t tx_command;
   uint32_t id;
   uint16_t tx_cell[THREE_CELLS];
-} testStruct;
+} send_struct;
 
 SerialTransfer comms;
 
@@ -69,6 +69,29 @@ serial_state_t serial1_send_command(const tx_command_t command){
   uint16_t tx_size = 0U;
 
   tx_size = comms.txObj(command, tx_size);
+  comms.sendData(tx_size);
+  return SER_OK;
+}
+
+serial_state_t serial1_send_data_packet(uint16_t payload[], uint32_t * const this_transmission_id){
+  uint16_t tx_size = 0U;
+
+  if(!state.initialised){
+    return SER_UNINITIALISED;
+  }
+  if(this_transmission_id == NULL){
+    return SER_INVALID_PARAMETER;
+  }
+
+  for(uint8_t channel = 0U; channel < THREE_CELLS; channel++){
+    send_struct.tx_cell[channel] = payload[channel];
+  }
+  state.last_packet_id++;
+  send_struct.id = state.last_packet_id;
+  send_struct.tx_command = TX_PAYLOAD_ATTACHED;
+  *this_transmission_id = state.last_packet_id;
+
+  tx_size = comms.txObj(send_struct, tx_size);
   comms.sendData(tx_size);
   return SER_OK;
 }

@@ -1,3 +1,4 @@
+#include <sys/_stdint.h>
 #ifndef SERIAL1_HAL_H
 #define SERIAL1_HAL_H
 
@@ -16,7 +17,7 @@ typedef enum{
   TX_HANDSHAKE_REQUEST,
   TX_HANDSHAKE_ACKNOWLEDGED,
   TX_REQUEST_DATA_PACKET,
-  TX_PAYLOAD_SENT,
+  TX_PAYLOAD_ATTACHED,
   TX_READY_TO_TRANSMIT,
   TX_REFUSED_REQUEST
 } tx_command_t;
@@ -24,5 +25,6 @@ typedef enum{
 serial_state_t serial1_init(void);
 serial_state_t serial1_listen_for_command(tx_command_t * const command);
 serial_state_t serial1_send_command(const tx_command_t command);
+serial_state_t serial1_send_data_packet(uint32_t * const this_transmission_id);
 
 #endif

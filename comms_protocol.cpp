@@ -34,15 +34,11 @@ typedef struct{
   uint32_t ack_wait_timer_ms;
   uint32_t data_packet_request_timer_ms;
   uint32_t last_packet_received_id;
+  bool data_packet_sent;
 } comms_internal_state_t;
 
-typedef struct{
-  uint16_t cell[THREE_CELLS];
-} payload_t;
-
-
 static comms_internal_state_t state = {};
-static payload_t payload = {};
+static uint16_t payload[THREE_CELLS] = {};
 
 
 // Private function declarations
@@ -80,6 +76,7 @@ comms_return_t comms_init(const comms_system_type_t system_type){
   state.handshake_timer_running = false;
   state.data_packet_request_timer_running = false;
   state.last_packet_received_id = 0U;
+  state.data_packet_sent = false;
   state.initialised = true;
   return COMMS_OK;
 }
@@ -143,8 +140,9 @@ comms_return_t comms_load_data_packet(uint16_t controller_cell_ppo2_X1000[]){
     return COMMS_UNINITIALISED;
   }
   for(uint8_t channel = 0U; channel < THREE_CELLS; channel++){
-    payload.cell[channel] = controller_cell_ppo2_X1000[channel];
+    payload[channel] = controller_cell_ppo2_X1000[channel];
   }
+  state.data_packet_sent = false;
   Serial.println("Data packet successfully loaded");
   return COMMS_OK;
 }
