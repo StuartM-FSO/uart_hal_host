@@ -3,6 +3,8 @@
 
 constexpr uint32_t LOOP_SPEED_MS = 1000U;
 
+uint16_t cells[3];
+
 typedef enum{
   FSM_UNITIALISED = 0,
   FSM_WAITING
@@ -65,12 +67,14 @@ void fsm_waiting(void){
   uint32_t loop_timer = state.loop_timer;
 
   comms_check();
+  if(has_timer_elapsed(now, loop_timer, 250U)){
+    comms_prepare_payload(cells);
+    state.loop_timer = now;
+  }
   
 }
 
 void load_payload(){
-  uint16_t cells[3] = {};
-
   cells[0] = 1111U;
   cells[1] = 2222U;
   cells[2] = 3333U;

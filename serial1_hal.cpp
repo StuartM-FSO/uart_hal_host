@@ -13,7 +13,7 @@ struct __attribute__((packed)) STRUCT {
   tx_command_t tx_command;
   uint32_t id;
   uint16_t tx_cell[THREE_CELLS];
-} send_struct;
+} tx_struct;
 
 SerialTransfer comms;
 
@@ -71,12 +71,17 @@ serial_state_t serial1_send_command(const tx_command_t command){
   return SER_OK;
 }
 
-serial_state_t serial1_send_data_packet(void){
+serial_state_t serial1_send_data_packet(data_packet_t datapacket){
   uint16_t tx_size = 0U;
-  char tx[5] = "BOOP";
 
-  tx_size = comms.txObj(tx);
+  tx_struct.id = datapacket.id;
+  for(uint8_t channel = 0U; channel < THREE_CELLS; channel++){
+    tx_struct.tx_cell[channel] = datapacket.cell[channel];
+  }
+
+  tx_size = comms.txObj(tx_struct, tx_size);
   comms.sendData(tx_size);
+
   return SER_OK;
 }
 

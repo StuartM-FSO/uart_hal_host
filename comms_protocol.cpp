@@ -1,3 +1,4 @@
+#include "usb/SerialUSB.h"
 #include "api/Common.h"
 #include <sys/_stdint.h>
 #include <Arduino.h>
@@ -9,7 +10,7 @@
 constexpr uint32_t MAX_ACK_WAIT_MS = 2000U;
 constexpr uint32_t MAX_DATA_PACKET_RQ_WAIT_MS = 1000U;
 constexpr uint32_t MAX_DATA_CONFIRMATION_WAIT_MS = 500U;
-constexpr uint8_t THREE_CELLS = 0U;
+constexpr uint8_t THREE_CELLS = 3U;
 
 typedef enum{
   COMSTATE_ZERO_COUNT = 0U,
@@ -36,7 +37,9 @@ typedef struct{
   uint32_t data_packet_request_timer_ms;
 } comms_internal_state_t;
 
+
 static comms_internal_state_t state = {};
+static data_packet_t payload = {};
 
 
 // Private function declarations
@@ -76,6 +79,8 @@ comms_return_t comms_init(const comms_system_type_t system_type){
   state.handshake_timer_running = false;
   state.data_packet_request_timer_running = false;
   state.initialised = true;
+  payload.id = 0U;
+  payload.sent = false;
   return COMMS_OK;
 }
 
@@ -134,6 +139,21 @@ comms_return_t comms_data_packet_request(void){
   }
   state_transition(COMSTATE_SEND_DATA_REQUEST);
   return COMMS_OK;
+}
+
+comms_return_t comms_prepare_payload(uint16_t ppo2_x1000[]){
+  if(!state.initialised){
+    return COMMS_UNINITIALISED;
+  }
+  // Check data validity here
+
+  if(payload.sent){
+    payload.id++;
+    payload.sent = false;
+  }
+  for(uint8_t channel = 0U; channel < THREE_CELLS; channel++){
+    payload.cell[channel] = ppo2_x1000[channel];
+  }
 }
 
 // Private
@@ -195,19 +215,21 @@ static void comstate_wait_for_data_packet(void){
   if(serial1_listen_for_data_packet() == SER_OK){
     Serial.println("Packet received");
     state.handshake_timer_running = false;
-    state_transition(COMSTATE_DEBUG_SEQUENCE_END);
+    state_transition(COMSTATE_LISTEN);
   }
   return;
 }
 
 static void comstate_send_data_packet(void){
-  Serial.println("Sending data packet");
-  serial1_send_data_packet();
-  state_transition(COMSTATE_DEBUG_SEQUENCE_END);
+  Serial.print("Sending data packet ID: ");
+  Serial.println(payload.id);
+  serial1_send_data_packet(payload);
+  payload.sent = true;
+  state_transition(COMSTATE_LISTEN);
 }
 
 static void comstate_send_data_request(void){
-  if(!state.system_type == COM_TYPE_CLIENT){
+  if(state.system_type != COM_TYPE_CLIENT){
     return;
   }
   if(state.data_packet_request_timer_running){
@@ -279,6 +301,7 @@ static void comstate_wait_for_acknowledgement(void){
 static void comstate_acknowledge_handshake(void){
   Serial.println("Handshake acknowledged");
   serial1_send_command(TX_HANDSHAKE_ACKNOWLEDGED);
+  state.handshake_timer_running = false;
   state_transition(COMSTATE_LISTEN);
 }
 
@@ -296,6 +319,7 @@ static void comstate_send_handshake(void){
 
 static void comstate_timeout(void){
   Serial.println("Timed out");
+  state.handshake_timer_running = false;
   state_transition(COMSTATE_LISTEN);
 }
 

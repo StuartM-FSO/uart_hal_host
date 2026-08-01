@@ -25,10 +25,16 @@ typedef enum{
   TX_DATA_PACKET_REJECTED
 } tx_command_t;
 
+typedef struct{
+  uint32_t id;
+  uint16_t cell[3];
+  bool sent;
+} data_packet_t;
+
 serial_state_t serial1_init(void);
 serial_state_t serial1_listen_for_command(tx_command_t * const command);
 serial_state_t serial1_send_command(const tx_command_t command);
-serial_state_t serial1_send_data_packet(void);
+serial_state_t serial1_send_data_packet(data_packet_t datapacket);
 serial_state_t serial1_listen_for_data_packet(void);
 
 #endif
