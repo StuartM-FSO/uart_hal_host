@@ -229,19 +229,30 @@ static void state_transition(comstate_t new_state){
 static void comstate_wait_for_data_packet(void){
   uint32_t now = millis();
   uint32_t timeout = state.data_packet_request_timer_ms;
+  serial_state_t listen_result = SER_UNINITIALISED;
 
   if(has_timer_elapsed(now, timeout, MAX_DATA_PACKET_RQ_WAIT_MS)){
     Serial.println("Data packet request timed out");
     state.data_packet_request_timer_running = false;
     state_transition(COMSTATE_LISTEN);
   }
-  if(serial1_listen_for_data_packet(&payload) == SER_OK){
+  listen_result = serial1_listen_for_data_packet(&payload);
+  if(listen_result == SER_OK){
     Serial.print("Packet received, id: ");
     Serial.println(payload.id);
     Serial.println();
     state.data_packet_request_timer_running = false;
     state_transition(COMSTATE_LISTEN);
     state.payload_has_updated = true;
+    return;
+  }
+  if(listen_result == SER_DATA_PACKET_REJECTED){
+    Serial.println("Data packet rejected");
+    state_transition(COMSTATE_DEBUG_SEQUENCE_END);
+    return;
+  }
+  if(listen_result == SER_UNINITIALISED){
+    // ???
   }
 }
 

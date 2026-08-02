@@ -94,6 +94,7 @@ serial_state_t serial1_send_data_packet(const data_packet_t datapacket){
   }
 
   tx_struct.id = datapacket.id;
+  tx_struct.tx_command = TX_PAYLOAD_ATTACHED;
   tx_struct.controller_status = datapacket.controller_status;
   for(uint8_t channel = 0U; channel < THREE_CELLS; channel++){
     tx_struct.tx_cell[channel] = datapacket.cell[channel];
@@ -111,6 +112,9 @@ serial_state_t serial1_listen_for_data_packet(data_packet_t *datapacket){
     return SER_NOTHING_SENT;
   }
   rx_size = comms.rxObj(rx_struct);
+  if(rx_struct.rx_command != TX_PAYLOAD_ATTACHED){
+    return SER_DATA_PACKET_REJECTED;
+  }
   datapacket->id = rx_struct.rx_id;
   datapacket->controller_status = rx_struct.controller_status;
   for(uint8_t channel = 0U; channel < THREE_CELLS; channel++){
