@@ -165,16 +165,8 @@ uint16_t comms_get_ppo2_x1000(const uint8_t channel){
   return payload.cell[channel];
 }
 
-comms_return_t comms_get_latest_id(uint32_t * const latest_id){
-  if(!state.initialised){
-    return COMMS_UNINITIALISED;
-  }
-  if(latest_id == NULL){
-    return COMMS_INVALID_PARAMETER;
-  }
-
-  *latest_id = payload.id;
-  return COMMS_OK;
+uint32_t comms_get_latest_id(void){
+  return payload.id;
 }
 
 bool comms_payload_updated(void){
