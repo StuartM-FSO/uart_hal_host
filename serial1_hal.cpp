@@ -72,13 +72,24 @@ serial_state_t serial1_listen_for_command(tx_command_t * const command){
 serial_state_t serial1_send_command(const tx_command_t command){
   uint16_t tx_size = 0U;
 
+  if(!state.initialised){
+    return SER_UNINITIALISED;
+  }
+  if((command <= TX_ZERO_COUNT) || (command >= TX_END_COUNT)){
+    return SER_INVALID_PARAMETER;
+  }
+
   tx_size = comms.txObj(command, tx_size);
   comms.sendData(tx_size);
   return SER_OK;
 }
 
-serial_state_t serial1_send_data_packet(data_packet_t datapacket){
+serial_state_t serial1_send_data_packet(const data_packet_t datapacket){
   uint16_t tx_size = 0U;
+
+  if(!state.initialised){
+    return SER_UNINITIALISED;
+  }
 
   tx_struct.id = datapacket.id;
   for(uint8_t channel = 0U; channel < THREE_CELLS; channel++){

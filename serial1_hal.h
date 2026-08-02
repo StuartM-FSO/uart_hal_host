@@ -15,6 +15,7 @@ typedef enum{
 } serial_state_t;
 
 typedef enum{
+  TX_ZERO_COUNT = 0,
   TX_UNINITIALISED,
   TX_HANDSHAKE_REQUEST,
   TX_HANDSHAKE_ACKNOWLEDGED,
@@ -23,7 +24,8 @@ typedef enum{
   TX_READY_TO_TRANSMIT,
   TX_REFUSED_REQUEST,
   TX_DATA_PACKET_ACCEPTED,
-  TX_DATA_PACKET_REJECTED
+  TX_DATA_PACKET_REJECTED,
+  TX_END_COUNT
 } tx_command_t;
 
 typedef struct{
@@ -35,7 +37,7 @@ typedef struct{
 serial_state_t serial1_init(void);
 serial_state_t serial1_listen_for_command(tx_command_t * const command);
 serial_state_t serial1_send_command(const tx_command_t command);
-serial_state_t serial1_send_data_packet(data_packet_t datapacket);
+serial_state_t serial1_send_data_packet(const data_packet_t datapacket);
 serial_state_t serial1_listen_for_data_packet(data_packet_t *datapacket);
 
 #endif
