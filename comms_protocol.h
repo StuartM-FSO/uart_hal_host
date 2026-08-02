@@ -26,4 +26,8 @@ comms_return_t comms_handshake(void);
 comms_return_t comms_data_packet_request(void);
 comms_return_t comms_prepare_payload(const uint16_t * ppo2_x1000);
 
+comms_return_t comms_get_ppo2_x1000(const uint8_t channel, uint16_t * const ppo2_x1000);
+comms_return_t comms_get_latest_id(uint32_t * const latest_id);
+
+bool comms_payload_updated(void);
 #endif

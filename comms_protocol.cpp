@@ -1,3 +1,4 @@
+#include <cstddef>
 #include <sys/_stdint.h>
 #include <Arduino.h>
 #include <stdint.h>
@@ -33,6 +34,7 @@ typedef struct{
   comstate_t internal_state;
   uint32_t ack_wait_timer_ms;
   uint32_t data_packet_request_timer_ms;
+  bool payload_has_updated;
 } comms_internal_state_t;
 
 
@@ -75,7 +77,8 @@ comms_return_t comms_init(const comms_system_type_t system_type){
   state.handshake_timer_running = false;
   state.data_packet_request_timer_running = false;
   state.initialised = true;
-  payload.id = 0U;
+  state.payload_has_updated = false;
+  payload.id = 1U;
   payload.sent = false;
   return COMMS_OK;
 }
@@ -153,6 +156,33 @@ comms_return_t comms_prepare_payload(const uint16_t * ppo2_x1000){
   return COMMS_OK;
 }
 
+comms_return_t comms_get_ppo2_x1000(const uint8_t channel, uint16_t * const ppo2_x1000){
+  if(!state.initialised){
+    return COMMS_UNINITIALISED;
+  }
+  if(channel >= THREE_CELLS){
+    return COMMS_INVALID_PARAMETER;
+  }
+  *ppo2_x1000 = payload.cell[channel];
+  return COMMS_OK;
+}
+
+comms_return_t comms_get_latest_id(uint32_t * const latest_id){
+  if(!state.initialised){
+    return COMMS_UNINITIALISED;
+  }
+  if(latest_id == NULL){
+    return COMMS_INVALID_PARAMETER;
+  }
+
+  *latest_id = payload.id;
+  return COMMS_OK;
+}
+
+bool comms_payload_updated(void){
+  return state.payload_has_updated;
+}
+
 // Private
 
 static comstate_t process_command(const comstate_t current_state, const tx_command_t received_command){
@@ -214,15 +244,10 @@ static void comstate_wait_for_data_packet(void){
   if(serial1_listen_for_data_packet(&payload) == SER_OK){
     Serial.print("Packet received, id: ");
     Serial.println(payload.id);
-    for(uint8_t channel = 0U; channel < THREE_CELLS; channel++){
-      Serial.print(payload.cell[channel]);
-      if(channel != 2U){
-        Serial.print(" : ");
-      }
-    }
     Serial.println();
     state.data_packet_request_timer_running = false;
     state_transition(COMSTATE_LISTEN);
+    state.payload_has_updated = true;
   }
 }
 
@@ -251,6 +276,7 @@ static void comstate_send_data_request(void){
   Serial.println("Data packet request sent");
   state.data_packet_request_timer_ms = millis();
   state.data_packet_request_timer_running = true;
+  state.payload_has_updated = false;
   Serial.println("Wait for data packet");
   state_transition(COMSTATE_WAIT_FOR_DATA_PACKET);
 }
