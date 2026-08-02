@@ -4,6 +4,7 @@
 
 #include <Arduino.h>
 #include <stdint.h>
+#include "controller_status_def.h"
 
 typedef enum{
   SER_OK,

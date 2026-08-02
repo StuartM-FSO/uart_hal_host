@@ -1,5 +1,6 @@
 #include "comms_protocol.h"
 #include "time_helpers.h"
+#include "controller_status_def.h"
 
 constexpr uint32_t LOOP_SPEED_MS = 1000U;
 

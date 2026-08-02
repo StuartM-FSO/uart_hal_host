@@ -15,6 +15,12 @@ struct __attribute__((packed)) STRUCT {
   uint16_t tx_cell[THREE_CELLS];
 } tx_struct;
 
+struct __attribute__((packed)) STRUCT_RX {
+  tx_command_t rx_command;
+  uint32_t rx_id;
+  uint16_t rx_cell[THREE_CELLS];
+} rx_struct;
+
 SerialTransfer comms;
 
 
@@ -87,14 +93,13 @@ serial_state_t serial1_send_data_packet(data_packet_t datapacket){
 
 serial_state_t serial1_listen_for_data_packet(void){
   uint16_t rx_size = 0U;
-  char rx[5] = {};
-
-  if(comms.available()){
-    rx_size = comms.rxObj(rx);
-    Serial.println(rx);
-    return SER_OK;
+  
+  if(!comms.available()){
+    return SER_NOTHING_SENT;
   }
-  return SER_NOTHING_SENT;
+  rx_size = comms.rxObj(rx_struct);
+  Serial.println(rx_struct.rx_id);
+  return SER_OK;
 }
 
 

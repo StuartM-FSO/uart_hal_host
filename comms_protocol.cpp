@@ -3,6 +3,7 @@
 #include "comms_protocol.h"
 #include "time_helpers.h"
 #include "serial1_hal.h"
+#include "controller_status_def.h"
 
 constexpr uint32_t MAX_ACK_WAIT_MS = 2000U;
 constexpr uint32_t MAX_DATA_PACKET_RQ_WAIT_MS = 500U;
