@@ -31,6 +31,7 @@ typedef enum{
 typedef struct{
   uint32_t id;
   uint16_t cell[3];
+  controller_status_t controller_status;
   bool sent;
 } data_packet_t;
 

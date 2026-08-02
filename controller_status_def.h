@@ -3,9 +3,10 @@
 
 typedef enum{
   CONTROLLER_ZERO_COUNT = 0,
+  CONTROLLER_UNKNOWN_STATUS,
   CONTROLLER_OK,
   CONTROLLER_END_COUNT
-} controller_condition_t;
+} controller_status_t;
 
 
 #endif

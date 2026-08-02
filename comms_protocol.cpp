@@ -5,7 +5,6 @@
 #include "comms_protocol.h"
 #include "time_helpers.h"
 #include "serial1_hal.h"
-#include "controller_status_def.h"
 
 constexpr uint32_t MAX_ACK_WAIT_MS = 2000U;
 constexpr uint32_t MAX_DATA_PACKET_RQ_WAIT_MS = 500U;
@@ -79,6 +78,7 @@ comms_return_t comms_init(const comms_system_type_t system_type){
   state.initialised = true;
   state.payload_has_updated = false;
   payload.id = 1U;
+  payload.controller_status = CONTROLLER_UNKNOWN_STATUS;
   payload.sent = false;
   return COMMS_OK;
 }
@@ -140,7 +140,7 @@ comms_return_t comms_data_packet_request(void){
   return COMMS_OK;
 }
 
-comms_return_t comms_prepare_payload(const uint16_t * ppo2_x1000){
+comms_return_t comms_prepare_payload(const uint16_t * ppo2_x1000, const controller_status_t controller_status){
   if(!state.initialised){
     return COMMS_UNINITIALISED;
   }
@@ -153,6 +153,7 @@ comms_return_t comms_prepare_payload(const uint16_t * ppo2_x1000){
   for(uint8_t channel = 0U; channel < THREE_CELLS; channel++){
     payload.cell[channel] = ppo2_x1000[channel];
   }
+  payload.controller_status = controller_status;
   return COMMS_OK;
 }
 
@@ -181,6 +182,10 @@ comms_return_t comms_get_latest_id(uint32_t * const latest_id){
 
 bool comms_payload_updated(void){
   return state.payload_has_updated;
+}
+
+controller_status_t comms_get_controller_status(void){
+  return payload.controller_status;
 }
 
 // Private

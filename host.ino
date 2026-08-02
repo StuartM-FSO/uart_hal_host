@@ -69,7 +69,7 @@ void fsm_waiting(void){
 
   comms_check();
   if(has_timer_elapsed(now, loop_timer, 250U)){
-    comms_prepare_payload(cells);
+    comms_prepare_payload(cells, CONTROLLER_OK);
     state.loop_timer = now;
   }
   

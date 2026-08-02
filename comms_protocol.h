@@ -4,6 +4,7 @@
 
 #include <Arduino.h>
 #include <stdint.h>
+#include "controller_status_def.h"
 
 typedef enum{
   COM_ZERO_COUNT = 0U,
@@ -24,10 +25,11 @@ comms_return_t comms_init(const comms_system_type_t system_type);
 comms_return_t comms_check(void);
 comms_return_t comms_handshake(void);
 comms_return_t comms_data_packet_request(void);
-comms_return_t comms_prepare_payload(const uint16_t * ppo2_x1000);
+comms_return_t comms_prepare_payload(const uint16_t * ppo2_x1000, const controller_status_t controller_status);
 
 comms_return_t comms_get_ppo2_x1000(const uint8_t channel, uint16_t * const ppo2_x1000);
 comms_return_t comms_get_latest_id(uint32_t * const latest_id);
+controller_status_t comms_get_controller_status(void);
 
 bool comms_payload_updated(void);
 #endif
