@@ -9,6 +9,7 @@
 constexpr uint32_t MAX_ACK_WAIT_MS = 2000U;
 constexpr uint32_t MAX_DATA_PACKET_RQ_WAIT_MS = 500U;
 constexpr uint8_t THREE_CELLS = 3U;
+constexpr uint16_t ZERO_CELL_READING = 0U;
 
 typedef enum{
   COMSTATE_ZERO_COUNT = 0U,
@@ -157,15 +158,11 @@ comms_return_t comms_prepare_payload(const uint16_t * ppo2_x1000, const controll
   return COMMS_OK;
 }
 
-comms_return_t comms_get_ppo2_x1000(const uint8_t channel, uint16_t * const ppo2_x1000){
-  if(!state.initialised){
-    return COMMS_UNINITIALISED;
-  }
+uint16_t comms_get_ppo2_x1000(const uint8_t channel){
   if(channel >= THREE_CELLS){
-    return COMMS_INVALID_PARAMETER;
+    return ZERO_CELL_READING;
   }
-  *ppo2_x1000 = payload.cell[channel];
-  return COMMS_OK;
+  return payload.cell[channel];
 }
 
 comms_return_t comms_get_latest_id(uint32_t * const latest_id){
