@@ -1,3 +1,4 @@
+#include <sys/_stdint.h>
 #include <Arduino.h>
 #include <stdint.h>
 #include "comms_protocol.h"
@@ -210,8 +211,16 @@ static void comstate_wait_for_data_packet(void){
     state.data_packet_request_timer_running = false;
     state_transition(COMSTATE_LISTEN);
   }
-  if(serial1_listen_for_data_packet() == SER_OK){
-    Serial.println("Packet received");
+  if(serial1_listen_for_data_packet(&payload) == SER_OK){
+    Serial.print("Packet received, id: ");
+    Serial.println(payload.id);
+    for(uint8_t channel = 0U; channel < THREE_CELLS; channel++){
+      Serial.print(payload.cell[channel]);
+      if(channel != 2U){
+        Serial.print(" : ");
+      }
+    }
+    Serial.println();
     state.data_packet_request_timer_running = false;
     state_transition(COMSTATE_LISTEN);
   }

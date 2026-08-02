@@ -91,14 +91,17 @@ serial_state_t serial1_send_data_packet(data_packet_t datapacket){
   return SER_OK;
 }
 
-serial_state_t serial1_listen_for_data_packet(void){
+serial_state_t serial1_listen_for_data_packet(data_packet_t *datapacket){
   uint16_t rx_size = 0U;
   
   if(!comms.available()){
     return SER_NOTHING_SENT;
   }
   rx_size = comms.rxObj(rx_struct);
-  Serial.println(rx_struct.rx_id);
+  datapacket->id = rx_struct.rx_id;
+  for(uint8_t channel = 0U; channel < THREE_CELLS; channel++){
+    datapacket->cell[channel] = rx_struct.rx_cell[channel];
+  }
   return SER_OK;
 }
 
