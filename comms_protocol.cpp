@@ -179,6 +179,21 @@ controller_status_t comms_get_controller_status(void){
 
 // Private
 
+static uint16_t crc16_ccitt(const uint8_t *data, size_t length){
+  uint16_t crc = 0xFFFF;    // Initial value
+
+  while (length--){
+    crc ^= (uint16_t)(*data++) << 8;
+    for (uint8_t i = 0; i < 8; i++){
+      if (crc & 0x8000){
+        crc = (crc << 1) ^ 0x1021;
+      } else{
+        crc <<= 1;}
+    }
+  }
+  return crc;
+}
+
 static comstate_t process_command(const comstate_t current_state, const tx_command_t received_command){
   comstate_t transition_to = COMSTATE_UNINITIALISED;
 
