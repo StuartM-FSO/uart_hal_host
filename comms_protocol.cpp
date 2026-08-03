@@ -35,6 +35,7 @@ typedef struct{
   uint32_t ack_wait_timer_ms;
   uint32_t data_packet_request_timer_ms;
   bool payload_has_updated;
+  bool payload_sent;
 } comms_internal_state_t;
 
 
@@ -80,7 +81,7 @@ comms_return_t comms_init(const comms_system_type_t system_type){
   state.payload_has_updated = false;
   payload.id = 1U;
   payload.controller_status = CONTROLLER_UNKNOWN_STATUS;
-  payload.sent = false;
+  state.payload_sent = false;
   return COMMS_OK;
 }
 
@@ -147,9 +148,9 @@ comms_return_t comms_prepare_payload(const uint16_t * ppo2_x1000, const controll
   }
   // Check data validity here
 
-  if(payload.sent){
+  if(state.payload_sent){
     payload.id++;
-    payload.sent = false;
+    state.payload_sent = false;
   }
   for(uint8_t channel = 0U; channel < THREE_CELLS; channel++){
     payload.cell[channel] = ppo2_x1000[channel];
@@ -277,7 +278,7 @@ static void comstate_send_data_packet(void){
   if(serial1_send_data_packet(payload) != SER_OK){
     // Handle error
   }
-  payload.sent = true;
+  state.payload_sent = true;
   state_transition(COMSTATE_LISTEN);
 }
 
