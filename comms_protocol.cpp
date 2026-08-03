@@ -59,6 +59,7 @@ static void comstate_debug_sequence_end(void);
 //    General
 static void state_transition(comstate_t state);
 static comstate_t process_command(const comstate_t current_state, const tx_command_t received_command);
+static uint16_t crc16_ccitt(const uint8_t *data, size_t length);
 
 // Public API
 
@@ -156,6 +157,7 @@ comms_return_t comms_prepare_payload(const uint16_t * ppo2_x1000, const controll
     payload.cell[channel] = ppo2_x1000[channel];
   }
   payload.controller_status = controller_status;
+  payload.crc = crc16_ccitt((const uint8_t *)&payload, (sizeof(payload) - sizeof(payload.crc)));
   return COMMS_OK;
 }
 
@@ -278,6 +280,8 @@ static void comstate_send_data_packet(void){
   if(serial1_send_data_packet(payload) != SER_OK){
     // Handle error
   }
+  Serial.print("CRC: ");
+  Serial.println(payload.crc);
   state.payload_sent = true;
   state_transition(COMSTATE_LISTEN);
 }
