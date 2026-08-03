@@ -101,6 +101,7 @@ serial_state_t serial1_send_data_packet(const data_packet_t datapacket){
   for(uint8_t channel = 0U; channel < THREE_CELLS; channel++){
     tx_struct.tx_cell[channel] = datapacket.cell[channel];
   }
+  tx_struct.crc = datapacket.crc;
   tx_size = comms.txObj(tx_struct, tx_size);
   comms.sendData(tx_size);
 
@@ -122,6 +123,7 @@ serial_state_t serial1_listen_for_data_packet(data_packet_t *datapacket){
   for(uint8_t channel = 0U; channel < THREE_CELLS; channel++){
     datapacket->cell[channel] = rx_struct.rx_cell[channel];
   }
+  datapacket->crc = rx_struct.crc;
   return SER_OK;
 }
 

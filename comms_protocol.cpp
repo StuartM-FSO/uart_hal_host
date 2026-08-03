@@ -1,3 +1,4 @@
+#include "api/Print.h"
 #include <cstddef>
 #include <sys/_stdint.h>
 #include <Arduino.h>
@@ -248,6 +249,7 @@ static void comstate_wait_for_data_packet(void){
   uint32_t now = millis();
   uint32_t timeout = state.data_packet_request_timer_ms;
   serial_state_t listen_result = SER_UNINITIALISED;
+  uint16_t calculated_crc = 0U;
 
   if(has_timer_elapsed(now, timeout, MAX_DATA_PACKET_RQ_WAIT_MS)){
     Serial.println("Data packet request timed out");
@@ -256,9 +258,13 @@ static void comstate_wait_for_data_packet(void){
   }
   listen_result = serial1_listen_for_data_packet(&payload);
   if(listen_result == SER_OK){
+    calculated_crc = crc16_ccitt((const uint8_t *)&payload, (sizeof(payload) - sizeof(payload.crc)));
     Serial.print("Packet received, id: ");
     Serial.println(payload.id);
-    Serial.println();
+    Serial.print("RX CRC: ");
+    Serial.print(payload.crc, HEX);
+    Serial.print(" Calc CRC: ");
+    Serial.println(calculated_crc, HEX);
     state.data_packet_request_timer_running = false;
     state_transition(COMSTATE_LISTEN);
     state.payload_has_updated = true;
@@ -281,7 +287,7 @@ static void comstate_send_data_packet(void){
     // Handle error
   }
   Serial.print("CRC: ");
-  Serial.println(payload.crc);
+  Serial.println(payload.crc, HEX);
   state.payload_sent = true;
   state_transition(COMSTATE_LISTEN);
 }
