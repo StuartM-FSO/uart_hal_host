@@ -14,6 +14,7 @@ struct __attribute__((packed)) STRUCT {
   uint32_t id;
   uint16_t tx_cell[THREE_CELLS];
   controller_status_t controller_status;
+  uint16_t crc;
 } tx_struct;
 
 struct __attribute__((packed)) STRUCT_RX {
@@ -21,6 +22,7 @@ struct __attribute__((packed)) STRUCT_RX {
   uint32_t rx_id;
   uint16_t rx_cell[THREE_CELLS];
   controller_status_t controller_status;
+  uint16_t crc;
 } rx_struct;
 
 SerialTransfer comms;
