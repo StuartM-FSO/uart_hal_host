@@ -29,10 +29,11 @@ typedef enum{
   TX_END_COUNT
 } tx_command_t;
 
-typedef struct{
+typedef struct __attribute__((packed)){
   uint32_t id;
   uint16_t cell[3];
   controller_status_t controller_status;
+  uint16_t crc;
 } data_packet_t;
 
 serial_state_t serial1_init(void);
