@@ -162,23 +162,25 @@ comms_return_t comms_prepare_payload(const uint16_t * ppo2_x1000, const controll
   return COMMS_OK;
 }
 
-uint16_t comms_get_ppo2_x1000(const uint8_t channel){
-  if(channel >= THREE_CELLS){
-    return ZERO_CELL_READING;
-  }
-  return payload.cell[channel];
-}
-
-uint32_t comms_get_latest_id(void){
-  return payload.id;
-}
-
 bool comms_payload_updated(void){
   return state.payload_has_updated;
 }
 
-controller_status_t comms_get_controller_status(void){
-  return payload.controller_status;
+comms_return_t comms_get_data_packet(data_packet_t *transfer_packet){
+  uint16_t crc_calculated = crc16_ccitt((const uint8_t *)&payload, (sizeof(payload) - sizeof(payload.crc)));
+
+  if(!state.initialised){
+    return COMMS_UNINITIALISED;
+  }
+  if(crc_calculated != payload.crc){
+    return COMMS_CRC_MISMATCH;
+  }
+  transfer_packet->id = payload.id;
+  transfer_packet->controller_status = payload.controller_status;
+  for(uint8_t channel = 0U; channel < THREE_CELLS; channel++){
+    transfer_packet->cell[channel] = payload.cell[channel];
+  }
+  return COMMS_OK;
 }
 
 // Private

@@ -18,7 +18,8 @@ typedef enum{
   COMMS_INVALID_PARAMETER,
   COMMS_UNINITIALISED,
   COMMS_SERIAL1_FAILED_INIT,
-  COMMS_FAILED
+  COMMS_FAILED,
+  COMMS_CRC_MISMATCH
 } comms_return_t;
 
 comms_return_t comms_init(const comms_system_type_t system_type);
@@ -27,9 +28,7 @@ comms_return_t comms_handshake(void);
 comms_return_t comms_data_packet_request(void);
 comms_return_t comms_prepare_payload(const uint16_t * ppo2_x1000, const controller_status_t controller_status);
 
-uint16_t comms_get_ppo2_x1000(const uint8_t channel);
-uint32_t comms_get_latest_id(void);
-controller_status_t comms_get_controller_status(void);
+comms_return_t comms_get_data_packet(data_packet_t *transfer_packet);
 
 bool comms_payload_updated(void);
 #endif
