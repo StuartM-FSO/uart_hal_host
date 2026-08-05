@@ -4,7 +4,7 @@
 
 #include <Arduino.h>
 #include <stdint.h>
-#include "controller_status_def.h"
+#include "comms_shared_definitions.h"
 
 typedef enum{
   COM_ZERO_COUNT = 0U,

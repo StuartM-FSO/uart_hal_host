@@ -4,7 +4,7 @@
 
 #include <Arduino.h>
 #include <stdint.h>
-#include "controller_status_def.h"
+#include "comms_shared_definitions.h"
 
 typedef enum{
   SER_OK,
